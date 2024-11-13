@@ -34,6 +34,9 @@ class _ScanPageState extends State<ScanPage> {
   Widget build(BuildContext context) {
     return Consumer<BleController>(
       builder: (context, controller, child) {
+        final sortedResults = controller.scanResults
+          ..sort((a, b) => a.device.name.startsWith('Fanishion') ? -1 : 1);
+
         return Scaffold(
           backgroundColor: AppColor.base,
           appBar: const ScanPageAppBar(),
@@ -51,9 +54,9 @@ class _ScanPageState extends State<ScanPage> {
                     child: ListView.builder(
                       padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
                       physics: const AlwaysScrollableScrollPhysics(),
-                      itemCount: controller.scanResults.length,
+                      itemCount: sortedResults.length,
                       itemBuilder: (context, index) {
-                        final result = controller.scanResults[index];
+                        final result = sortedResults[index];
                         return deviceWidget(context, controller, result);
                       },
                     ),

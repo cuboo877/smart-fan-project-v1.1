@@ -1,4 +1,5 @@
 import 'package:fanishion_project_v1/constant/appColor.dart';
+import 'package:fanishion_project_v1/pages/controlPage.dart';
 import 'package:fanishion_project_v1/pages/scanPage.dart';
 import 'package:fanishion_project_v1/service/ble_controller.dart';
 import 'package:flutter/material.dart';

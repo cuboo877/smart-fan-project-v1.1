@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
@@ -48,6 +49,10 @@ class BleController extends ChangeNotifier {
   ClientStatus status = ClientStatus.BluetoothOff;
   String? _localDeviceName;
   String? get localDeviceName => _localDeviceName;
+
+  double? currentTemp;
+  double? currentHumidity;
+  int? currentRssi; // 用于存储当前 RSSI 值的变量
 
   factory BleController() {
     return _instance;
@@ -257,10 +262,13 @@ class BleController extends ChangeNotifier {
       switch (command.type) {
         case CommandType.speed:
           commandString = 'Speed:${command.value}';
+          break;
         case CommandType.circulate:
           commandString = 'Circulate:${command.value}';
+          break;
         case CommandType.auto:
-          commandString = 'Auto:${command.value}'; //TODO
+          commandString = 'Auto:${command.value}';
+          break;
       }
 
       // 發送命令
@@ -269,7 +277,7 @@ class BleController extends ChangeNotifier {
         withoutResponse: writeCharacteristic!.properties.writeWithoutResponse,
       );
 
-      // 這裡可以添加資料庫操作
+      // 這��可以添加資料庫操作
       await _saveCommandToDatabase(command);
 
       print('發送命令成功: $commandString');
@@ -300,6 +308,17 @@ class BleController extends ChangeNotifier {
           String message = utf8.decode(value);
           print('收到訊息: $message');
           lastReceivedMessage = message;
+
+          // 解析温度和湿度数据
+          if (message.startsWith("T/H:")) {
+            List<String> parts = message.substring(4).split(",");
+            if (parts.length == 2) {
+              currentTemp = double.tryParse(parts[0]);
+              currentHumidity = double.tryParse(parts[1]);
+              print('当前温度: $currentTemp, 当前湿度: $currentHumidity');
+            }
+          }
+
           notifyListeners();
         }, onError: (error) {
           print('通知錯誤: $error');
@@ -345,6 +364,22 @@ class BleController extends ChangeNotifier {
     } catch (e) {
       print('獲取設備名稱失敗: $e');
       _localDeviceName = '未知設備';
+    }
+  }
+
+  // 读取当前连接设备的 RSSI 值
+  Future<void> readRssi() async {
+    if (connectedDevice != null) {
+      try {
+        final rssi = await connectedDevice!.readRssi();
+        currentRssi = rssi; // 更新当前 RSSI 值
+        notifyListeners(); // 通知监听者更新 UI
+        print('当前 RSSI: $currentRssi');
+      } catch (e) {
+        print('读取 RSSI 时发生错误: $e');
+      }
+    } else {
+      print('没有连接的设备，无法读取 RSSI');
     }
   }
 }

@@ -5,6 +5,7 @@ import 'package:fanishion_project_v1/service/ble_controller.dart';
 import 'package:fanishion_project_v1/widget/controlPageAppBar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:async';
 
 class ControlPage extends StatefulWidget {
   const ControlPage({super.key});
@@ -128,9 +129,15 @@ class _ControlPageState extends State<ControlPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "自動", //TODO: decide fan speed from DHT11 temperature
+              "自動",
               style: Font.h1,
             ),
+            Text(
+              "目前溫度: ${controller.currentTemp}°C"
+              "\n"
+              "目前濕度: ${controller.currentHumidity}%",
+              style: Font.subtitle,
+            )
           ],
         ),
       ),
@@ -212,8 +219,7 @@ class _ControlPageState extends State<ControlPage> {
             onTapUp: (_) => setState(() => _isPressed = false),
             onTapCancel: () => setState(() => _isPressed = false),
             onTap: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => const MapPage()));
+              _showRssiDialog(context, controller);
             },
             child: Center(
               child: Text("我的裝置在哪裡?",
@@ -222,6 +228,59 @@ class _ControlPageState extends State<ControlPage> {
           ),
         ),
       ),
+    );
+  }
+
+  void _showRssiDialog(BuildContext context, BleController controller) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        Timer? timer;
+
+        void startTimer() {
+          timer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+            controller.readRssi();
+          });
+        }
+
+        void stopTimer() {
+          timer?.cancel();
+        }
+
+        void onClose() {
+          stopTimer();
+          Navigator.of(context).pop();
+        }
+
+        startTimer();
+
+        return Dialog(
+          backgroundColor: AppColor.accent,
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Center(
+                  child: Text(
+                    "與裝置的距離:",
+                    style: Font.h2,
+                  ),
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
+                Center(
+                  child: Text(
+                    "${controller.currentRssi ?? '...'}",
+                    style: Font.h2.copyWith(color: AppColor.sub1),
+                  ),
+                )
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -280,7 +339,7 @@ class _ControlPageState extends State<ControlPage> {
         activeTickMarkColor: AppColor.sub1, // 統一刻度標記顏色
         inactiveTickMarkColor: AppColor.sub1, // 統一刻度標記顏色
         tickMarkShape: const RoundSliderTickMarkShape(tickMarkRadius: 4.0),
-        // 添加刻度標記
+        // 添加���度標記
         showValueIndicator: ShowValueIndicator.never,
       ),
       child: Slider(
