@@ -219,7 +219,7 @@ class _ControlPageState extends State<ControlPage> {
             onTapUp: (_) => setState(() => _isPressed = false),
             onTapCancel: () => setState(() => _isPressed = false),
             onTap: () {
-              _showRssiDialog(context, controller);
+              _showRssiBottomSheet(context, controller);
             },
             child: Center(
               child: Text("我的裝置在哪裡?",
@@ -231,57 +231,96 @@ class _ControlPageState extends State<ControlPage> {
     );
   }
 
-  void _showRssiDialog(BuildContext context, BleController controller) {
-    showDialog(
+  void _showRssiBottomSheet(BuildContext context, BleController controller) {
+    Timer? timer;
+    bool isSheetOpen = true;
+
+    showModalBottomSheet(
       context: context,
+      backgroundColor: AppColor.accent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (BuildContext context) {
-        Timer? timer;
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            timer?.cancel();
+            timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+              if (isSheetOpen) {
+                controller.readRssi();
+                setState(() {});
+              }
+            });
 
-        void startTimer() {
-          timer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
-            controller.readRssi();
-          });
-        }
-
-        void stopTimer() {
-          timer?.cancel();
-        }
-
-        void onClose() {
-          stopTimer();
-          Navigator.of(context).pop();
-        }
-
-        startTimer();
-
-        return Dialog(
-          backgroundColor: AppColor.accent,
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Center(
-                  child: Text(
-                    "與裝置的距離:",
-                    style: Font.h2,
-                  ),
+            return WillPopScope(
+              onWillPop: () async {
+                isSheetOpen = false;
+                timer?.cancel();
+                return true;
+              },
+              child: Container(
+                width: MediaQuery.of(context).size.width,
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 20),
+                      decoration: BoxDecoration(
+                        color: AppColor.base,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    Text(
+                      "與裝置的距離",
+                      style: Font.h2,
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      controller.currentRssi != null
+                          ? "${controller.currentRssi!.toInt().abs() - 70}"
+                          : "...",
+                      style: Font.h2.copyWith(color: AppColor.sub1),
+                    ),
+                    const SizedBox(height: 15),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(15),
+                      decoration: BoxDecoration(
+                        color: AppColor.sub3,
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "距離參考:",
+                            style: Font.h2,
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            "0~50: 非常接近\n"
+                            "50~120: 一段距離\n"
+                            "123以上: 遙遠",
+                            style: Font.subtitle.copyWith(color: AppColor.sub1),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
                 ),
-                const SizedBox(
-                  height: 20,
-                ),
-                Center(
-                  child: Text(
-                    "${controller.currentRssi ?? '...'}",
-                    style: Font.h2.copyWith(color: AppColor.sub1),
-                  ),
-                )
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
-    );
+    ).whenComplete(() {
+      isSheetOpen = false;
+      timer?.cancel();
+    });
   }
 
   Widget _buildModeButton({
@@ -339,7 +378,7 @@ class _ControlPageState extends State<ControlPage> {
         activeTickMarkColor: AppColor.sub1, // 統一刻度標記顏色
         inactiveTickMarkColor: AppColor.sub1, // 統一刻度標記顏色
         tickMarkShape: const RoundSliderTickMarkShape(tickMarkRadius: 4.0),
-        // 添加���度標記
+        // 添加刻度標記
         showValueIndicator: ShowValueIndicator.never,
       ),
       child: Slider(
