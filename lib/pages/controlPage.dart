@@ -280,8 +280,33 @@ class _ControlPageState extends State<ControlPage> {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      "${controller.currentRssi ?? '...'}",
+                      "${controller.currentRssi == null ? '...' : controller.currentRssi!.toInt().abs() - 75}",
                       style: Font.h2.copyWith(color: AppColor.sub1),
+                    ),
+                    const SizedBox(height: 20),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(15),
+                      decoration: BoxDecoration(
+                        color: AppColor.sub3,
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "距離參考:",
+                            style: Font.h2,
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            "0~50: 非常接近\n"
+                            "50~100: 一段距離\n"
+                            "100以上: 遙遠",
+                            style: Font.subtitle.copyWith(color: AppColor.sub1),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 30),
                   ],
