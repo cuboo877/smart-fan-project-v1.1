@@ -233,7 +233,7 @@ class _ControlPageState extends State<ControlPage> {
 
   void _showRssiBottomSheet(BuildContext context, BleController controller) {
     Timer? timer;
-    bool isSheetOpen = true;
+    bool isSheetOpen = true; // 追踪 bottom sheet 是否開啟
 
     showModalBottomSheet(
       context: context,
@@ -244,22 +244,23 @@ class _ControlPageState extends State<ControlPage> {
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
-            timer?.cancel();
-            timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+            // 啟動定時器
+            timer?.cancel(); // 確保不會重複創建定時器
+            timer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
               if (isSheetOpen) {
                 controller.readRssi();
-                setState(() {});
+                setState(() {}); // 更新 UI
               }
             });
 
             return WillPopScope(
               onWillPop: () async {
-                isSheetOpen = false;
-                timer?.cancel();
+                isSheetOpen = false; // 標記 sheet 已關閉
+                timer?.cancel(); // 關閉時取消定時器
                 return true;
               },
               child: Container(
-                width: MediaQuery.of(context).size.width,
+                width: MediaQuery.of(context).size.width, // 設置最大寬度
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -279,37 +280,10 @@ class _ControlPageState extends State<ControlPage> {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      controller.currentRssi != null
-                          ? "${controller.currentRssi!.toInt().abs() - 70}"
-                          : "...",
+                      "${controller.currentRssi ?? '...'}",
                       style: Font.h2.copyWith(color: AppColor.sub1),
                     ),
-                    const SizedBox(height: 15),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(15),
-                      decoration: BoxDecoration(
-                        color: AppColor.sub3,
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "距離參考:",
-                            style: Font.h2,
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            "0~50: 非常接近\n"
-                            "50~120: 一段距離\n"
-                            "123以上: 遙遠",
-                            style: Font.subtitle.copyWith(color: AppColor.sub1),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 30),
                   ],
                 ),
               ),
@@ -318,8 +292,8 @@ class _ControlPageState extends State<ControlPage> {
         );
       },
     ).whenComplete(() {
-      isSheetOpen = false;
-      timer?.cancel();
+      isSheetOpen = false; // 標記 sheet 已關閉
+      timer?.cancel(); // 確保在底部表單關閉時取消定時器
     });
   }
 
