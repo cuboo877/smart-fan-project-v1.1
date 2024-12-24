@@ -1,9 +1,11 @@
+// 動態分配namespace
 allprojects {
     repositories {
         google()
         mavenCentral()
     }
 }
+// 動態分配namespace
 
 rootProject.buildDir = "../build"
 subprojects {
